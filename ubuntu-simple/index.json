@@ -29,7 +29,7 @@
     }
   },
   "backend": {
-    "imageid": "rhel9"
+    "imageid": "ubuntu"
   },
   "interface": {
     "layout": "terminal"
