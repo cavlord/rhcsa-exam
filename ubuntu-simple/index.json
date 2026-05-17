@@ -21,15 +21,17 @@
     },
     "assets": {
       "host01": [
-        {"file": "setup_lab.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "validate_lab.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "reset_lab.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "questions.txt", "target": "/root/"}
+        {"file": "assets/setup_lab_ubuntu.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "assets/validate_lab_complete.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "assets/init_exam.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "assets/rhcsa_exam_menu.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "assets/reset_lab.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "assets/questions.txt", "target": "/root/"}
       ]
     }
   },
   "backend": {
-    "imageid": "ubuntu"
+    "imageid": "rhel9"
   },
   "interface": {
     "layout": "terminal"
