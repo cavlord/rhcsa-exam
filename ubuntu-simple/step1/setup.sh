@@ -6,19 +6,6 @@ sleep 2
 # Make scripts executable
 chmod +x /root/*.sh
 
-# Run the lab setup
+# Run the lab setup (menu will be launched from within setup_lab_ubuntu.sh)
 cd /root
-bash ./setup_lab_ubuntu.sh || true
-
-echo ""
-echo "=========================================="
-echo "Lab environment ready!"
-echo "=========================================="
-echo ""
-echo "Starting RHCSA Exam Menu..."
-sleep 1
-
-# Launch exam menu
-exec bash ./rhcsa_exam_menu.sh
-
-# Made with Bob
+bash ./setup_lab_ubuntu.sh
