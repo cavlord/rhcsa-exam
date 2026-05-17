@@ -1,0 +1,64 @@
+﻿RHCSA EXAM SIMULATION
+Duration: 2 Hours
+
+Node1 Tasks
+
+1. Configure networking:
+   - IP: 192.168.1.6/24
+   - Gateway: 192.168.1.254
+   - DNS: 192.168.1.254
+   - Hostname: node1.net11.example.com
+
+2. Configure DNF repositories:
+   - BaseOS
+   - AppStream
+
+3. Troubleshoot httpd service:
+   - Service must run on port 82.
+
+4. Create users and groups:
+   - Group: manager
+   - Users: simone, walhalla, pandora
+   - pandora must have no interactive shell.
+
+5. Configure collaborative directory:
+   - Path: /shared/manager
+   - SGID enabled
+   - Accessible only by manager group.
+
+6. Configure cron job:
+   - User: walhalla
+   - Run every minute
+   - Command: logger "EX200 Test"
+
+7. Configure autofs:
+   - Automount simone home directory.
+
+8. Create compressed archive:
+   - Backup /etc into /root/etc_backup.tar.bz2
+
+9. Configure chrony:
+   - Sync with servera.lab.example.com
+
+10. Find all files owned by walhalla:
+    - Copy to /root/walhalla
+
+11. Extract all strings containing â€œnalâ€ from /usr/share/dict/words.
+
+Node2 Tasks
+
+12. Reset root password using rd.break.
+
+13. Configure repositories.
+
+14. Create LVM:
+    - VG: wgroup
+    - LV: wshare
+    - PE size: 8M
+    - Mount: /mnt/share
+
+15. Create 400MB swap partition.
+
+16. Resize logical volume to approximately 450MB.
+
+17. Configure recommended tuned profile.
