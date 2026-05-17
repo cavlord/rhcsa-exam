@@ -1,10 +1,9 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -Eeuo pipefail
 
 userdel -r simone 2>/dev/null || true
 userdel -r walhalla 2>/dev/null || true
 userdel -r pandora 2>/dev/null || true
-
 groupdel manager 2>/dev/null || true
 
 rm -rf /shared/manager
@@ -21,13 +20,15 @@ rm -f /etc/yum.repos.d/BaseOS.repo
 rm -f /etc/yum.repos.d/AppStream.repo
 
 systemctl stop httpd autofs chronyd tuned 2>/dev/null || true
+systemctl stop apache2 2>/dev/null || true
 
 hostnamectl set-hostname localhost.localdomain
 
 rm -rf /opt/labdata
-
 swapoff -a || true
 
 rm -f /var/log/rhcsa_simulator.log
 
 echo "Environment reset complete"
+
+# Made with Bob
