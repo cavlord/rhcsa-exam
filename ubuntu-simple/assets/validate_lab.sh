@@ -2,7 +2,8 @@
 # Complete RHCSA Exam Validation Script
 # Validates all 17 questions
 
-set -e
+# Don't exit on error - continue checking all questions
+# set -e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
