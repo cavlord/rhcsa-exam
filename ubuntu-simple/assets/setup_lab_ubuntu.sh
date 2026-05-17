@@ -238,7 +238,7 @@ main() {
   
   log "RHCSA simulation environment created successfully!"
   log "View exam questions: cat /root/questions.txt"
-  log "Validate solutions: /root/validate_lab.sh"
+  log "Validate solutions: /root/validate_lab_complete.sh"
   log ""
   log "Ubuntu Adaptations:"
   log "  - httpd → apache2"
