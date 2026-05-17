@@ -21,12 +21,12 @@
     },
     "assets": {
       "host01": [
-        {"file": "assets/setup_lab_ubuntu.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "assets/validate_lab_complete.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "assets/init_exam.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "assets/rhcsa_exam_menu.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "assets/reset_lab.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "assets/questions.txt", "target": "/root/"}
+        {"file": "etup_lab_ubuntu.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "validate_lab_complete.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "init_exam.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "rhcsa_exam_menu.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "reset_lab.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "questions.txt", "target": "/root/"}
       ]
     }
   },
