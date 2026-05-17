@@ -70,14 +70,17 @@ EOF
   
   log "eth1 connection created (not activated yet)"
   
-  log "Students should reconfigure eth1 to:"
-  log "  IP: 192.168.1.6/24"
-  log "  Gateway: 192.168.1.254"
-  log "  DNS: 192.168.1.254"
+  log "Students should reconfigure:"
+  log "  Network (eth1):"
+  log "    - IP: 192.168.1.6/24"
+  log "    - Gateway: 192.168.1.254"
+  log "    - DNS: 192.168.1.254"
+  log "  Hostname: node1.net11.example.com"
   log "Can use nmcli or nmtui to configure eth1"
   
-  # Set hostname
+  # Set hostname to WRONG value (students must fix)
   hostnamectl set-hostname broken.example.com 2>/dev/null || true
+  log "Hostname set to 'broken.example.com' (intentionally wrong)"
   
   # Create systemd service to recreate veth pair on boot
   cat > /etc/systemd/system/veth-eth1.service <<EOF
