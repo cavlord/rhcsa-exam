@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Don't exit on error - continue setup even if some commands fail
-set -e
+# set -e
 
 LOGFILE="/var/log/rhcsa_simulator.log"
 exec > >(tee -a "$LOGFILE") 2>&1
