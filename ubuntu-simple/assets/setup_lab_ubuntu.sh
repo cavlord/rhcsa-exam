@@ -51,12 +51,13 @@ EOF
   
   # Configure eth1 with WRONG settings for exam practice
   log "Configuring eth1 with intentionally wrong settings"
-  nmcli con add type ethernet ifname eth1 con-name eth1 autoconnect yes 2>/dev/null || true
+  nmcli con add type ethernet ifname eth1 con-name eth1 autoconnect no 2>/dev/null || true
   nmcli con mod eth1 ipv4.addresses "192.168.1.100/24" 2>/dev/null || true
   nmcli con mod eth1 ipv4.gateway "192.168.1.1" 2>/dev/null || true
   nmcli con mod eth1 ipv4.dns "192.168.1.254" 2>/dev/null || true
   nmcli con mod eth1 ipv4.method manual 2>/dev/null || true
-  nmcli con up eth1 2>/dev/null || true
+  # Don't activate now, let it be activated later or by student
+  log "eth1 connection created (not activated yet)"
   
   log "Students should reconfigure eth1 to:"
   log "  IP: 192.168.1.6/24"
