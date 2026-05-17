@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Don't exit on error - continue setup even if some commands fail
 set -e
 
 LOGFILE="/var/log/rhcsa_simulator.log"
@@ -117,10 +118,8 @@ configure_cron() {
   systemctl start cron
   
   log "Creating incorrect cron job"
-  mkdir -p /var/spool/cron/crontabs
-  echo '*/5 * * * * logger EX200 Failed' >/var/spool/cron/crontabs/walhalla
-  chown walhalla:crontab /var/spool/cron/crontabs/walhalla
-  chmod 600 /var/spool/cron/crontabs/walhalla
+  # Use crontab command instead of direct file write
+  echo '*/5 * * * * logger EX200 Failed' | crontab -u walhalla - 2>/dev/null || true
 }
 
 configure_autofs() {
