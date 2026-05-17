@@ -22,7 +22,7 @@
     "assets": {
       "host01": [
         {"file": "setup_lab_ubuntu.sh", "target": "/root/", "chmod": "+x"},
-        {"file": "validate_lab.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "validate_lab_complete.sh", "target": "/root/", "chmod": "+x"},
         {"file": "init_exam.sh", "target": "/root/", "chmod": "+x"},
         {"file": "rhcsa_exam_menu.sh", "target": "/root/", "chmod": "+x"},
         {"file": "reset_lab.sh", "target": "/root/", "chmod": "+x"},
