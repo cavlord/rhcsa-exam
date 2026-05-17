@@ -1,4 +1,3 @@
-
 # Complete RHCSA Tasks
 
 ## View Your Tasks
@@ -19,7 +18,7 @@ cat /root/questions.txt
 After completing tasks, check your solutions:
 
 ```bash
-./validate_lab.sh
+./validate_lab_complete.sh
 ```
 
 ## Reset Environment
@@ -28,7 +27,15 @@ If you want to start over:
 
 ```bash
 ./reset_lab.sh
-./setup_lab.sh
+./setup_lab_ubuntu.sh
+```
+
+## Interactive Menu
+
+Use the interactive menu for easier navigation:
+
+```bash
+./rhcsa_exam_menu.sh
 ```
 
 ## Tips
