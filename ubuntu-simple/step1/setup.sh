@@ -10,12 +10,16 @@ chmod +x /root/*.sh
 cd /root
 ./setup_lab_ubuntu.sh
 
-echo "Lab environment ready!"
 echo ""
-echo "Starting RHCSA Exam Menu..."
-sleep 2
-
-# Launch exam menu
-./rhcsa_exam_menu.sh
+echo "=========================================="
+echo "Lab environment ready!"
+echo "=========================================="
+echo ""
+echo "To start the exam, run:"
+echo "  ./rhcsa_exam_menu.sh"
+echo ""
+echo "Or view questions directly:"
+echo "  cat questions.txt"
+echo ""
 
 # Made with Bob
