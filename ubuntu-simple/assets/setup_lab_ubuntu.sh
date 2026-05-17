@@ -3,7 +3,7 @@
 # set -e
 
 LOGFILE="/var/log/rhcsa_simulator.log"
-exec > >(tee -a "$LOGFILE") 2>&1
+# exec > >(tee -a "$LOGFILE") 2>&1
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
