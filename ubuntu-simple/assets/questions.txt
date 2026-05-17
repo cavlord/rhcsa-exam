@@ -1,4 +1,4 @@
-﻿RHCSA EXAM SIMULATION
+RHCSA EXAM SIMULATION
 Duration: 2 Hours
 
 Node1 Tasks
