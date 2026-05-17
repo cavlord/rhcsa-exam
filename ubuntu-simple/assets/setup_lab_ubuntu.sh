@@ -3,6 +3,7 @@
 # set -e
 
 LOGFILE="/var/log/rhcsa_simulator.log"
+# Log to file but don't use exec to avoid process issues
 # exec > >(tee -a "$LOGFILE") 2>&1
 
 RED='\033[0;31m'
@@ -30,23 +31,29 @@ require_root() {
 configure_network() {
   log "Installing NetworkManager for nmcli"
   apt-get install -y network-manager >/dev/null 2>&1 || true
-  systemctl start NetworkManager 2>/dev/null || true
-  systemctl enable NetworkManager 2>/dev/null || true
   
   # Get active interface
   INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -1)
   
+  # Make device managed by NetworkManager
+  log "Configuring NetworkManager to manage $INTERFACE"
+  cat > /etc/NetworkManager/conf.d/10-globally-managed-devices.conf <<EOF
+[keyfile]
+unmanaged-devices=none
+EOF
+  
+  systemctl restart NetworkManager 2>/dev/null || true
+  systemctl enable NetworkManager 2>/dev/null || true
+  sleep 2
+  
   log "Creating network configuration (interface: $INTERFACE)"
-  # Note: nmcli on Ubuntu works similarly to RHEL
-  # Skip if connection doesn't exist in Killercoda
-  if nmcli con show "$INTERFACE" >/dev/null 2>&1; then
-    nmcli con mod "$INTERFACE" ipv4.addresses "192.168.1.6/24" 2>/dev/null || true
-    nmcli con mod "$INTERFACE" ipv4.gateway "192.168.1.1" 2>/dev/null || true
-    nmcli con mod "$INTERFACE" ipv4.dns "192.168.1.254" 2>/dev/null || true
-    nmcli con mod "$INTERFACE" ipv4.method manual 2>/dev/null || true
-  else
-    warn "Network connection $INTERFACE not found in NetworkManager, skipping network config"
-  fi
+  # Create new connection for the interface
+  nmcli con add type ethernet ifname "$INTERFACE" con-name "$INTERFACE" 2>/dev/null || true
+  nmcli con mod "$INTERFACE" ipv4.addresses "192.168.1.6/24" 2>/dev/null || true
+  nmcli con mod "$INTERFACE" ipv4.gateway "192.168.1.1" 2>/dev/null || true
+  nmcli con mod "$INTERFACE" ipv4.dns "192.168.1.254" 2>/dev/null || true
+  nmcli con mod "$INTERFACE" ipv4.method manual 2>/dev/null || true
+  nmcli con up "$INTERFACE" 2>/dev/null || true
   
   hostnamectl set-hostname broken.example.com 2>/dev/null || true
 }
@@ -249,6 +256,18 @@ main() {
   log "  - dnf/yum → apt-get"
   log "  - /dev/vdb → loop device for LVM"
   log "  - Core RHCSA concepts remain the same!"
+  
+  echo ""
+  echo "=========================================="
+  echo "Lab environment ready!"
+  echo "=========================================="
+  echo ""
+  echo "Starting RHCSA Exam Menu..."
+  sleep 1
+  
+  # Launch exam menu directly from here
+  cd /root
+  exec bash /root/rhcsa_exam_menu.sh
 }
 
 main "$@"
