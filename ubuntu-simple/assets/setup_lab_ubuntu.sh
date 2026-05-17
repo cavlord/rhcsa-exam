@@ -31,31 +31,33 @@ require_root() {
 configure_network() {
   log "Installing NetworkManager for nmcli"
   apt-get install -y network-manager >/dev/null 2>&1 || true
+  systemctl enable NetworkManager 2>/dev/null || true
   
   # Get active interface
   INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -1)
   
-  # Make device managed by NetworkManager
-  log "Configuring NetworkManager to manage $INTERFACE"
-  cat > /etc/NetworkManager/conf.d/10-globally-managed-devices.conf <<EOF
-[keyfile]
-unmanaged-devices=none
-EOF
+  log "Network interface: $INTERFACE"
+  warn "Skipping network reconfiguration in Killercoda to avoid disconnection"
+  warn "Students will practice network configuration as part of exam tasks"
   
-  systemctl restart NetworkManager 2>/dev/null || true
-  systemctl enable NetworkManager 2>/dev/null || true
-  sleep 2
-  
-  log "Creating network configuration (interface: $INTERFACE)"
-  # Create new connection for the interface
-  nmcli con add type ethernet ifname "$INTERFACE" con-name "$INTERFACE" 2>/dev/null || true
-  nmcli con mod "$INTERFACE" ipv4.addresses "192.168.1.6/24" 2>/dev/null || true
-  nmcli con mod "$INTERFACE" ipv4.gateway "192.168.1.1" 2>/dev/null || true
-  nmcli con mod "$INTERFACE" ipv4.dns "192.168.1.254" 2>/dev/null || true
-  nmcli con mod "$INTERFACE" ipv4.method manual 2>/dev/null || true
-  nmcli con up "$INTERFACE" 2>/dev/null || true
-  
+  # Just set hostname
   hostnamectl set-hostname broken.example.com 2>/dev/null || true
+  
+  # Create dummy network config files for practice (won't be applied)
+  log "Creating network configuration files for practice"
+  mkdir -p /etc/sysconfig/network-scripts 2>/dev/null || true
+  cat > /etc/sysconfig/network-scripts/ifcfg-$INTERFACE <<EOF
+# This is a practice file - actual network is managed by Killercoda
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=$INTERFACE
+DEVICE=$INTERFACE
+ONBOOT=yes
+IPADDR=192.168.1.6
+PREFIX=24
+GATEWAY=192.168.1.254
+DNS1=192.168.1.254
+EOF
 }
 
 configure_repo() {
