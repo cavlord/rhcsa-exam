@@ -9,11 +9,13 @@ The lab environment is being prepared automatically. This includes:
 
 ## Your Scripts
 
-Three scripts are available in `/root/`:
+Four scripts are available in `/root/`:
 
-- `setup_lab.sh` - Creates the exam environment (runs automatically)
-- `validate_lab.sh` - Check your solutions
+- `setup_lab_ubuntu.sh` - Creates the exam environment (runs automatically)
+- `validate_lab_complete.sh` - Check your solutions
 - `reset_lab.sh` - Reset environment to start over
+- `init_exam.sh` - Initialize exam environment
+- `rhcsa_exam_menu.sh` - Interactive menu for exam tasks
 
 ## View Exam Questions
 
