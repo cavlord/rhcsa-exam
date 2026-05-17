@@ -29,21 +29,26 @@ require_root() {
 
 configure_network() {
   log "Installing NetworkManager for nmcli"
-  apt-get install -y network-manager >/dev/null 2>&1
-  systemctl start NetworkManager
-  systemctl enable NetworkManager
+  apt-get install -y network-manager >/dev/null 2>&1 || true
+  systemctl start NetworkManager 2>/dev/null || true
+  systemctl enable NetworkManager 2>/dev/null || true
   
   # Get active interface
   INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -1)
   
   log "Creating network configuration (interface: $INTERFACE)"
   # Note: nmcli on Ubuntu works similarly to RHEL
-  nmcli con mod "$INTERFACE" ipv4.addresses "192.168.1.6/24" || true
-  nmcli con mod "$INTERFACE" ipv4.gateway "192.168.1.1" || true
-  nmcli con mod "$INTERFACE" ipv4.dns "192.168.1.254" || true
-  nmcli con mod "$INTERFACE" ipv4.method manual || true
+  # Skip if connection doesn't exist in Killercoda
+  if nmcli con show "$INTERFACE" >/dev/null 2>&1; then
+    nmcli con mod "$INTERFACE" ipv4.addresses "192.168.1.6/24" 2>/dev/null || true
+    nmcli con mod "$INTERFACE" ipv4.gateway "192.168.1.1" 2>/dev/null || true
+    nmcli con mod "$INTERFACE" ipv4.dns "192.168.1.254" 2>/dev/null || true
+    nmcli con mod "$INTERFACE" ipv4.method manual 2>/dev/null || true
+  else
+    warn "Network connection $INTERFACE not found in NetworkManager, skipping network config"
+  fi
   
-  hostnamectl set-hostname broken.example.com
+  hostnamectl set-hostname broken.example.com 2>/dev/null || true
 }
 
 configure_repo() {
