@@ -36,8 +36,8 @@ check() {
 
 # Question 1: Network Configuration
 echo -e "${YELLOW}=== Network Configuration ===${NC}"
-check "1a" "IP Address configured on eth1" "ip addr show eth1 | grep -q '192.168.1.6/24'"
-check "1b" "Gateway configured" "nmcli con show eth1 | grep -q '192.168.1.254'"
+check "1a" "IP Address configured" "nmcli con show eth1 | grep -q 'ipv4.addresses.*192.168.1.6/24'"
+check "1b" "Gateway configured" "nmcli con show eth1 | grep -q 'ipv4.gateway.*192.168.1.254'"
 check "1c" "DNS configured" "nmcli con show eth1 | grep -q 'ipv4.dns.*192.168.1.254'"
 check "1d" "Hostname configured" "hostnamectl | grep -q 'node1.net11.example.com'"
 
