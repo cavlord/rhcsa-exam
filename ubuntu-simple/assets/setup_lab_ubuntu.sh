@@ -32,32 +32,62 @@ configure_network() {
   log "Installing NetworkManager for nmcli"
   apt-get install -y network-manager >/dev/null 2>&1 || true
   systemctl enable NetworkManager 2>/dev/null || true
+  systemctl start NetworkManager 2>/dev/null || true
   
-  # Get active interface
-  INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -1)
+  # Create dummy network interface for practice
+  log "Creating dummy network interface 'eth1' for practice"
+  modprobe dummy 2>/dev/null || true
+  ip link add eth1 type dummy 2>/dev/null || true
+  ip link set eth1 up 2>/dev/null || true
   
-  log "Network interface: $INTERFACE"
-  warn "Skipping network reconfiguration in Killercoda to avoid disconnection"
-  warn "Students will practice network configuration as part of exam tasks"
+  # Make dummy interface managed by NetworkManager
+  cat > /etc/NetworkManager/conf.d/10-globally-managed-devices.conf <<EOF
+[keyfile]
+unmanaged-devices=*,except:type:dummy
+EOF
   
-  # Just set hostname
+  systemctl restart NetworkManager 2>/dev/null || true
+  sleep 2
+  
+  # Configure dummy interface with WRONG settings for exam practice
+  log "Configuring eth1 with intentionally wrong settings"
+  nmcli con add type ethernet ifname eth1 con-name eth1 2>/dev/null || true
+  nmcli con mod eth1 ipv4.addresses "192.168.1.100/24" 2>/dev/null || true
+  nmcli con mod eth1 ipv4.gateway "192.168.1.1" 2>/dev/null || true
+  nmcli con mod eth1 ipv4.dns "192.168.1.254" 2>/dev/null || true
+  nmcli con mod eth1 ipv4.method manual 2>/dev/null || true
+  nmcli con up eth1 2>/dev/null || true
+  
+  log "Students should reconfigure eth1 to:"
+  log "  IP: 192.168.1.6/24"
+  log "  Gateway: 192.168.1.254"
+  log "  DNS: 192.168.1.254"
+  
+  # Set hostname
   hostnamectl set-hostname broken.example.com 2>/dev/null || true
   
-  # Create dummy network config files for practice (won't be applied)
-  log "Creating network configuration files for practice"
-  mkdir -p /etc/sysconfig/network-scripts 2>/dev/null || true
-  cat > /etc/sysconfig/network-scripts/ifcfg-$INTERFACE <<EOF
-# This is a practice file - actual network is managed by Killercoda
-TYPE=Ethernet
-BOOTPROTO=none
-NAME=$INTERFACE
-DEVICE=$INTERFACE
-ONBOOT=yes
-IPADDR=192.168.1.6
-PREFIX=24
-GATEWAY=192.168.1.254
-DNS1=192.168.1.254
+  # Make dummy interface persistent
+  cat > /etc/modules-load.d/dummy.conf <<EOF
+dummy
 EOF
+  
+  # Create systemd service to recreate dummy interface on boot
+  cat > /etc/systemd/system/dummy-eth1.service <<EOF
+[Unit]
+Description=Create dummy network interface eth1
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link add eth1 type dummy
+ExecStart=/sbin/ip link set eth1 up
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  
+  systemctl enable dummy-eth1.service 2>/dev/null || true
 }
 
 configure_repo() {
@@ -251,7 +281,7 @@ main() {
   
   log "RHCSA simulation environment created successfully!"
   log "View exam questions: cat /root/questions.txt"
-  log "Validate solutions: /root/validate_lab_complete.sh"
+  log "Validate solutions: /root/validate_lab.sh"
   log ""
   log "Ubuntu Adaptations:"
   log "  - httpd → apache2"
