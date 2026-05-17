@@ -9,7 +9,7 @@
       {
         "title": "Setup Lab Environment",
         "text": "step1/text.md",
-        "background": "step1/setup.sh"
+        "foreground": "step1/setup.sh"
       },
       {
         "title": "Complete RHCSA Tasks",
