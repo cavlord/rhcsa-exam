@@ -61,7 +61,7 @@ EOF
   log "    - IP: 192.168.1.6/24"
   log "    - Gateway: 192.168.1.254"
   log "    - DNS: 192.168.1.254"
-  log "  Hostname: node1.net11.example.com"
+  log "  Hostname: ibmid.example.com"
   log "Can use nmcli or nmtui to configure eth1"
   
   # Set hostname to WRONG value (students must fix)
