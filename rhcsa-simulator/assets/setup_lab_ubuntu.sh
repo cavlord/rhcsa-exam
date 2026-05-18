@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-set -e
+# Don't exit on error - continue setup even if some commands fail
+# set -e
 
 LOGFILE="/var/log/rhcsa_simulator.log"
-exec > >(tee -a "$LOGFILE") 2>&1
+# Log to file but don't use exec to avoid process issues
+# exec > >(tee -a "$LOGFILE") 2>&1
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -28,110 +30,143 @@ require_root() {
 
 configure_network() {
   log "Installing NetworkManager for nmcli"
-  apt-get install -y network-manager >/dev/null 2>&1
-  systemctl start NetworkManager
-  systemctl enable NetworkManager
+  apt-get install -y network-manager >/dev/null 2>&1 || true
+  systemctl enable NetworkManager 2>/dev/null || true
+  systemctl start NetworkManager 2>/dev/null || true
   
-  # Get active interface
-  INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -1)
+  # Create veth pair for practice (more compatible with nmtui than dummy)
+  log "Creating virtual network interface 'eth1' for practice"
+  ip link add eth1 type veth peer name veth1 2>/dev/null || true
+  ip link set eth1 up 2>/dev/null || true
+  ip link set veth1 up 2>/dev/null || true
   
-  log "Creating network configuration (interface: $INTERFACE)"
-  # Note: nmcli on Ubuntu works similarly to RHEL
-  nmcli con mod "$INTERFACE" ipv4.addresses "192.168.1.6/24" || true
-  nmcli con mod "$INTERFACE" ipv4.gateway "192.168.1.1" || true
-  nmcli con mod "$INTERFACE" ipv4.dns "192.168.1.254" || true
-  nmcli con mod "$INTERFACE" ipv4.method manual || true
+  # Make veth interface managed by NetworkManager
+  cat > /etc/NetworkManager/conf.d/10-globally-managed-devices.conf <<EOF
+[keyfile]
+unmanaged-devices=none
+EOF
   
-  hostnamectl set-hostname broken.example.com
+  log "Restarting NetworkManager..."
+  timeout 10 systemctl restart NetworkManager 2>/dev/null || true
+  sleep 2
+  log "NetworkManager restarted"
+  
+  # Create eth1 interface but DON'T configure it - students must configure
+  log "Creating eth1 interface (not configured - students must configure)"
+  nmcli con add type ethernet ifname eth1 con-name eth1 autoconnect no 2>/dev/null || true
+  log "eth1 interface created (no IP/Gateway/DNS configured)"
+  
+  log "Students should reconfigure:"
+  log "  Network (eth1):"
+  log "    - IP: 192.168.1.6/24"
+  log "    - Gateway: 192.168.1.254"
+  log "    - DNS: 192.168.1.254"
+  log "  Hostname: node1.net11.example.com"
+  log "Can use nmcli or nmtui to configure eth1"
+  
+  # Set hostname to WRONG value (students must fix)
+  hostnamectl set-hostname broken.example.com 2>/dev/null || true
+  log "Hostname set to 'broken.example.com' (intentionally wrong)"
+  
+  # Create systemd service to recreate veth pair on boot
+  cat > /etc/systemd/system/veth-eth1.service <<EOF
+[Unit]
+Description=Create virtual network interface eth1
+After=network.target
+Before=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link add eth1 type veth peer name veth1
+ExecStart=/sbin/ip link set eth1 up
+ExecStart=/sbin/ip link set veth1 up
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  
+  systemctl enable veth-eth1.service 2>/dev/null || true
 }
 
 configure_repo() {
-  log "Creating repository configuration (Ubuntu uses apt, not dnf)"
-  warn "Repository tasks will use apt instead of dnf/yum"
+  log "Repository configuration - students must create repo files"
+  warn "Students must create BaseOS.repo and AppStream.repo in /etc/yum.repos.d/"
   
-  # Create dummy repo files for practice
+  # Create directory but don't create repo files - students must create them
   mkdir -p /etc/yum.repos.d
-  cat >/etc/yum.repos.d/BaseOS.repo <<EOF
-[BaseOS]
-name=BaseOS
-baseurl=http://invalid.example.com/rhel9/BaseOS
-enabled=1
-gpgcheck=0
-EOF
-
-  cat >/etc/yum.repos.d/AppStream.repo <<EOF
-[AppStream]
-name=AppStream
-baseurl=http://invalid.example.com/rhel9/AppStream
-enabled=1
-gpgcheck=0
-EOF
 }
 
 configure_httpd_issue() {
-  log "Installing and configuring Apache (httpd equivalent)"
+  log "Setting up httpd troubleshooting scenario"
+  log "Question 3: httpd service has files in /var/www/html but not running on port 82"
+  
+  # Install apache2 (httpd equivalent on Ubuntu)
   apt-get install -y apache2 >/dev/null 2>&1
   
+  # Create httpd symlink for RHCSA compatibility
+  ln -sf /usr/sbin/apache2ctl /usr/sbin/httpd
+  ln -sf /lib/systemd/system/apache2.service /etc/systemd/system/httpd.service
+  systemctl daemon-reload
+  
+  # Create files in /var/www/html
   mkdir -p /var/www/html
   echo "RHCSA LAB" >/var/www/html/index.html
+  echo "Welcome to RHCSA Exam" >/var/www/html/welcome.html
   
-  # Change port to 81 (intentionally wrong)
+  # THE PROBLEM: Configure to listen on port 81 (wrong port)
   sed -i 's/Listen 80/Listen 81/' /etc/apache2/ports.conf
   sed -i 's/:80/:81/' /etc/apache2/sites-available/000-default.conf
   
-  # Configure firewall
+  # Configure firewall to allow port 82
   apt-get install -y ufw >/dev/null 2>&1
   ufw --force enable
   ufw allow 82/tcp
   
+  # Enable and start httpd on port 81 (WRONG PORT)
   systemctl enable apache2
-  systemctl restart apache2 || true
+  systemctl stop apache2 2>/dev/null || true
+  systemctl start apache2 || true
+  
+  log "httpd is running on port 81 (WRONG - should be 82)"
+  warn "PROBLEM: httpd configured on wrong port (81 instead of 82)"
+  warn "Students must: 1) Change config to port 82, 2) Restart httpd"
 }
 
 configure_users() {
-  log "Creating RHCSA users and groups"
-  
-  groupadd manager 2>/dev/null || true
-  
-  useradd -m simone -G manager 2>/dev/null || true
-  useradd -m walhalla -G manager 2>/dev/null || true
-  useradd -s /usr/sbin/nologin pandora 2>/dev/null || true
-  
-  echo "simone:indionce" | chpasswd
-  echo "walhalla:indionce" | chpasswd
-  echo "pandora:indionce" | chpasswd
+  log "Users and groups - students must create them"
+  warn "Students must create users: simone, walhalla, pandora"
+  warn "Students must create group: manager"
+  # Don't create users/groups - students must create them
 }
 
 configure_shared_directory() {
-  log "Creating broken collaborative directory"
-  
-  mkdir -p /shared/manager
-  chown root:root /shared/manager
-  chmod 755 /shared/manager
+  log "Collaborative directory - students must create it"
+  warn "Students must create /shared/manager with correct permissions"
+  # Don't create directory - students must create it
 }
 
 configure_cron() {
-  log "Installing and configuring cron"
+  log "Installing cron service"
   apt-get install -y cron >/dev/null 2>&1
   systemctl enable cron
   systemctl start cron
   
-  log "Creating incorrect cron job"
-  mkdir -p /var/spool/cron/crontabs
-  echo '*/5 * * * * logger EX200 Failed' >/var/spool/cron/crontabs/walhalla
-  chown walhalla:crontab /var/spool/cron/crontabs/walhalla
-  chmod 600 /var/spool/cron/crontabs/walhalla
+  log "Cron service ready - students must create cron jobs"
+  warn "Students must create cron job for user walhalla"
+  # Don't create cron job - students must create it
 }
 
 configure_autofs() {
-  log "Installing and configuring autofs"
+  log "Installing autofs"
   apt-get install -y autofs nfs-common >/dev/null 2>&1
-  
-  echo '/home /etc/auto.home' >>/etc/auto.master
-  echo 'simone -rw servera.lab.example.com:/wrong/path' >/etc/auto.home
   
   systemctl enable autofs
   systemctl start autofs || true
+  
+  log "Autofs service ready - students must configure auto.master and auto.home"
+  warn "Students must configure autofs for user simone"
+  # Don't create auto.master and auto.home entries - students must create them
 }
 
 configure_archive_task() {
@@ -152,12 +187,16 @@ configure_ntp() {
 }
 
 configure_find_tasks() {
-  log "Generating walhalla files"
+  log "Preparing find task directory"
   
   mkdir -p /opt/labdata
-  touch /opt/labdata/w1
-  touch /opt/labdata/w2
-  chown walhalla:walhalla /opt/labdata/w1 /opt/labdata/w2
+  # Create some dummy files but not owned by walhalla yet
+  touch /opt/labdata/file1
+  touch /opt/labdata/file2
+  touch /opt/labdata/file3
+  
+  log "Students must find files owned by user walhalla"
+  # Don't create walhalla-owned files - students must create user first
 }
 
 configure_lvm() {
@@ -193,7 +232,12 @@ configure_tuned() {
   apt-get install -y tuned >/dev/null 2>&1
   systemctl enable tuned
   systemctl start tuned
-  tuned-adm profile virtual-guest 2>/dev/null || true
+  
+  # Set to balanced profile (students must change to virtual-guest)
+  log "Setting tuned to balanced profile (wrong profile)"
+  tuned-adm profile balanced >/dev/null 2>&1 || true
+  
+  warn "Students must change tuned profile from balanced to virtual-guest"
 }
 
 install_dependencies() {
@@ -230,8 +274,8 @@ install_dependencies() {
         log "Installing semanage wrapper for Ubuntu compatibility..."
         
         # Install wrapper script
-        if [ -f "semanage_wrapper.sh" ]; then
-          cp semanage_wrapper.sh /usr/local/bin/semanage-ubuntu
+        if [ -f "/root/semanage_wrapper.sh" ]; then
+          cp /root/semanage_wrapper.sh /usr/local/bin/semanage-ubuntu
           chmod +x /usr/local/bin/semanage-ubuntu
           
           # Create alias
@@ -284,6 +328,18 @@ main() {
   log "  - dnf/yum → apt-get"
   log "  - /dev/vdb → loop device for LVM"
   log "  - Core RHCSA concepts remain the same!"
+  
+  echo ""
+  echo "=========================================="
+  echo "Lab environment ready!"
+  echo "=========================================="
+  echo ""
+  echo "Starting RHCSA Exam Menu..."
+  sleep 1
+  
+  # Launch exam menu directly from here
+  cd /root
+  exec bash /root/rhcsa_exam_menu.sh
 }
 
 main "$@"
