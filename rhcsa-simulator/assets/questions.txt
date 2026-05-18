@@ -7,7 +7,7 @@ Node1 Tasks
    - IP: 192.168.1.6/24
    - Gateway: 192.168.1.254
    - DNS: 192.168.1.254
-   - Hostname: node1.net11.example.com
+   - Hostname: ibmid.example.com
 
 2. Configure DNF repositories:
    - BaseOS
