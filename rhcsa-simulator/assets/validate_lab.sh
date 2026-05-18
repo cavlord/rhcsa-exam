@@ -53,6 +53,7 @@ check "3a" "Files exist in /var/www/html" "test -f /var/www/html/index.html"
 check "3b" "HTTPD enabled at boot" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
 check "3c" "HTTPD service running" "systemctl is-active httpd 2>/dev/null || systemctl is-active apache2 2>/dev/null"
 check "3d" "HTTPD listening on port 82" "ss -tlnp 2>/dev/null | grep -E ':(82)[[:space:]]' | grep -q 'apache2\\|httpd'"
+check "3e" "SELinux port 82 configured" "semanage port -l 2>/dev/null | grep http_port_t | grep -q '82'"
 
 # Question 4: Users and Groups
 echo -e "${YELLOW}=== Users and Groups ===${NC}"
