@@ -118,26 +118,19 @@ configure_httpd_issue() {
   sed -i 's/Listen 80/Listen 81/' /etc/apache2/ports.conf
   sed -i 's/:80/:81/' /etc/apache2/sites-available/000-default.conf
   
-  # Start another process on port 82 to block it
-  log "Blocking port 82 with dummy process..."
-  nohup nc -l -p 82 >/dev/null 2>&1 &
-  NC_PID=$!
-  echo $NC_PID > /tmp/port82_blocker.pid
-  
   # Configure firewall to allow port 82
-  apt-get install -y ufw netcat-openbsd >/dev/null 2>&1
+  apt-get install -y ufw >/dev/null 2>&1
   ufw --force enable
   ufw allow 82/tcp
   
-  # Enable and start httpd on port 81
+  # Enable and start httpd on port 81 (WRONG PORT)
   systemctl enable apache2
-  systemctl restart apache2 || true
+  systemctl stop apache2 2>/dev/null || true
+  systemctl start apache2 || true
   
-  log "httpd is running on port 81 (wrong)"
-  log "Port 82 is blocked by another process"
-  warn "PROBLEM: httpd running on wrong port (81 instead of 82)"
-  warn "PROBLEM: Port 82 is occupied by another process"
-  warn "Students must: 1) Kill process on port 82, 2) Change httpd to port 82, 3) Restart"
+  log "httpd is running on port 81 (WRONG - should be 82)"
+  warn "PROBLEM: httpd configured on wrong port (81 instead of 82)"
+  warn "Students must: 1) Change config to port 82, 2) Restart httpd"
 }
 
 configure_users() {
