@@ -13,8 +13,8 @@ Node1 Tasks
    - BaseOS
    - AppStream
 
-3. Troubleshoot httpd service:
-   - Service must run on port 82.
+3. In your system, httpd service has some files in /var/www/html, httpd service on your
+   system having some issue, service is not running on port 82. Solve the problem.
 
 4. Create users and groups:
    - Group: manager
