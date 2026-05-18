@@ -98,8 +98,12 @@ configure_repo() {
 }
 
 configure_httpd_issue() {
-  log "Setting up httpd troubleshooting scenario"
+  log "Setting up httpd troubleshooting scenario with SELinux"
   log "Question 3: httpd service has files in /var/www/html but not running on port 82"
+  
+  # Install SELinux packages
+  log "Installing SELinux..."
+  apt-get install -y selinux-basics selinux-policy-default auditd policycoreutils selinux-utils >/dev/null 2>&1
   
   # Install apache2 (httpd equivalent on Ubuntu)
   apt-get install -y apache2 >/dev/null 2>&1
@@ -114,20 +118,32 @@ configure_httpd_issue() {
   echo "RHCSA LAB" >/var/www/html/index.html
   echo "Welcome to RHCSA Exam" >/var/www/html/welcome.html
   
-  # THE PROBLEM: Change port to 81 (should be 82)
-  sed -i 's/Listen 80/Listen 81/' /etc/apache2/ports.conf
-  sed -i 's/:80/:81/' /etc/apache2/sites-available/000-default.conf
+  # THE PROBLEM 1: Wrong port configuration (81 instead of 82)
+  sed -i 's/Listen 80/Listen 82/' /etc/apache2/ports.conf
+  sed -i 's/:80/:82/' /etc/apache2/sites-available/000-default.conf
   
-  # Configure firewall to allow port 82 (correct port)
+  # THE PROBLEM 2: Wrong SELinux context on /var/www/html files
+  # Set wrong context (should be httpd_sys_content_t)
+  if command -v chcon >/dev/null 2>&1; then
+    chcon -R -t default_t /var/www/html 2>/dev/null || true
+  fi
+  
+  # Configure firewall
   apt-get install -y ufw >/dev/null 2>&1
   ufw --force enable
   ufw allow 82/tcp
   
-  # Enable and start httpd (will run on wrong port 81)
+  # Enable SELinux in permissive mode (for Ubuntu compatibility)
+  if [ -f /etc/selinux/config ]; then
+    sed -i 's/SELINUX=.*/SELINUX=permissive/' /etc/selinux/config 2>/dev/null || true
+  fi
+  
+  # Enable and start httpd
   systemctl enable apache2
   systemctl restart apache2 || true
   
-  warn "PROBLEM: httpd is running on port 81, but should run on port 82"
+  warn "PROBLEM: httpd files have wrong SELinux context"
+  warn "Students must: restorecon -Rv /var/www/html OR semanage/chcon"
 }
 
 configure_users() {
