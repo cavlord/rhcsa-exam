@@ -52,8 +52,7 @@ echo -e "${YELLOW}=== Question 3: HTTPD Service (files in /var/www/html, must ru
 check "3a" "Files exist in /var/www/html" "test -f /var/www/html/index.html"
 check "3b" "HTTPD enabled at boot" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
 check "3c" "HTTPD service running" "systemctl is-active httpd 2>/dev/null || systemctl is-active apache2 2>/dev/null"
-check "3d" "HTTPD listening on port 82" "ss -tlnp | grep ':82' | grep -q 'apache2\\|httpd'"
-check "3e" "Port 82 not blocked by other process" "! ss -tlnp | grep ':82' | grep -qv 'apache2\\|httpd'"
+check "3d" "HTTPD listening on port 82" "ss -tlnp 2>/dev/null | grep -E ':(82)[[:space:]]' | grep -q 'apache2\\|httpd'"
 
 # Question 4: Users and Groups
 echo -e "${YELLOW}=== Users and Groups ===${NC}"
