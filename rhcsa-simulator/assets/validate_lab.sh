@@ -40,7 +40,7 @@ echo -e "${YELLOW}=== Network Configuration ===${NC}"
 check "1a" "IP Address configured on eth1" "nmcli -f ipv4.addresses con show eth1 | grep -q '192.168.1.6/24'"
 check "1b" "Gateway configured" "nmcli -f ipv4.gateway con show eth1 | grep -q '192.168.1.254'"
 check "1c" "DNS configured" "nmcli -f ipv4.dns con show eth1 | grep -q '192.168.1.254'"
-check "1d" "Hostname configured" "hostnamectl | grep -q 'node1.net11.example.com'"
+check "1d" "Hostname configured" "hostnamectl | grep -q 'ibmid.example.com'"
 
 # Question 2: DNF Repositories
 echo -e "${YELLOW}=== Repository Configuration ===${NC}"
