@@ -47,11 +47,12 @@ echo -e "${YELLOW}=== Repository Configuration ===${NC}"
 check "2a" "BaseOS repo exists" "test -f /etc/yum.repos.d/BaseOS.repo"
 check "2b" "AppStream repo exists" "test -f /etc/yum.repos.d/AppStream.repo"
 
-# Question 3: HTTPD Service
-echo -e "${YELLOW}=== HTTPD Service ===${NC}"
-check "3a" "HTTPD installed" "which httpd || which apache2"
-check "3b" "HTTPD running on port 82" "ss -tlnp | grep -q ':82'"
-check "3c" "HTTPD enabled" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
+# Question 3: HTTPD Service Troubleshooting
+echo -e "${YELLOW}=== Question 3: HTTPD Service (files in /var/www/html, must run on port 82) ===${NC}"
+check "3a" "Files exist in /var/www/html" "test -f /var/www/html/index.html"
+check "3b" "HTTPD service running" "systemctl is-active httpd 2>/dev/null || systemctl is-active apache2 2>/dev/null"
+check "3c" "HTTPD listening on port 82" "ss -tlnp | grep -q ':82'"
+check "3d" "HTTPD enabled at boot" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
 
 # Question 4: Users and Groups
 echo -e "${YELLOW}=== Users and Groups ===${NC}"
