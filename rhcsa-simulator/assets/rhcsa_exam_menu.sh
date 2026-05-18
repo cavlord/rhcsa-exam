@@ -249,9 +249,23 @@ jump_to_question() {
     show_header
     echo -e "${BOLD}Select a Question (1-17):${NC}"
     echo ""
-    for i in {1..17}; do
-        echo "  [$i] Question $i"
-    done
+    echo "  [1] Network Configuration"
+    echo "  [2] DNF Repositories"
+    echo "  [3] Troubleshoot httpd Service (Port 82)"
+    echo "  [4] Users and Groups"
+    echo "  [5] Collaborative Directory"
+    echo "  [6] Cron Job"
+    echo "  [7] Autofs Configuration"
+    echo "  [8] Compressed Archive"
+    echo "  [9] Chrony/NTP"
+    echo "  [10] Find Files by Owner"
+    echo "  [11] Extract Strings"
+    echo "  [12] Reset Root Password"
+    echo "  [13] Configure Repositories (Node2)"
+    echo "  [14] Create LVM"
+    echo "  [15] Create Swap Partition"
+    echo "  [16] Resize Logical Volume"
+    echo "  [17] Configure Tuned Profile"
     echo ""
     echo -n "Enter question number: "
     read -r question_num
