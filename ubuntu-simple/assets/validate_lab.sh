@@ -119,13 +119,13 @@ check "14a" "Volume group exists" "vgs | grep -q 'wgroup'"
 check "14b" "Logical volume exists" "lvs | grep -q 'wshare'"
 check "14c" "PE size is 8M" "vgs wgroup 2>/dev/null | grep -q '8.00m'"
 check "14d" "Mounted at /mnt/share" "mount | grep -q '/mnt/share'"
-check "14e" "In fstab" "grep -q '/mnt/share' /etc/fstab"
+check "14e" "Persist upon reboot (in fstab)" "grep -q '/mnt/share' /etc/fstab"
 
 # Question 15: Swap
 echo -e "${YELLOW}=== Swap Partition ===${NC}"
 check "15a" "Swap exists" "swapon --show | grep -q 'swap'"
 check "15b" "Swap size ~400MB" "swapon --show | awk '{if(\$3 ~ /[0-9]+M/ && \$3+0 >= 380 && \$3+0 <= 420) exit 0; else exit 1}'"
-check "15c" "Swap in fstab" "grep -q 'swap' /etc/fstab"
+check "15c" "Persist upon reboot (in fstab)" "grep -q 'swap' /etc/fstab"
 
 # Question 16: Resize LV
 echo -e "${YELLOW}=== Resize Logical Volume ===${NC}"
