@@ -216,8 +216,8 @@ install_dependencies() {
     tar \
     rsyslog >/dev/null 2>&1
   
-  # Install SELinux tools and enable SELinux
-  log "Installing SELinux for RHCSA compatibility..."
+  # Install SELinux tools
+  log "Installing SELinux tools for RHCSA compatibility..."
   apt-get install -y policycoreutils-python-utils selinux-basics selinux-policy-default auditd >/dev/null 2>&1
   
   if command -v semanage >/dev/null 2>&1; then
@@ -227,18 +227,24 @@ install_dependencies() {
     if command -v getenforce >/dev/null 2>&1; then
       SELINUX_STATUS=$(getenforce 2>/dev/null || echo "Disabled")
       if [ "$SELINUX_STATUS" = "Disabled" ]; then
-        warn "⚠ SELinux is not enabled (Ubuntu uses AppArmor by default)"
-        warn "To enable SELinux (requires reboot):"
-        warn "  1. sudo selinux-activate"
-        warn "  2. sudo reboot"
-        warn ""
-        warn "Alternative for port 82 task (without SELinux):"
-        warn "  1. Edit Apache config: /etc/apache2/ports.conf"
-        warn "  2. Change 'Listen 81' to 'Listen 82'"
-        warn "  3. Edit: /etc/apache2/sites-available/000-default.conf"
-        warn "  4. Change '<VirtualHost *:81>' to '<VirtualHost *:82>'"
-        warn "  5. sudo systemctl restart apache2"
-        warn "  6. Firewall already allows port 82"
+        log "Installing semanage wrapper for Ubuntu compatibility..."
+        
+        # Install wrapper script
+        if [ -f "semanage_wrapper.sh" ]; then
+          cp semanage_wrapper.sh /usr/local/bin/semanage-ubuntu
+          chmod +x /usr/local/bin/semanage-ubuntu
+          
+          # Create alias
+          if ! grep -q "alias semanage=" /root/.bashrc 2>/dev/null; then
+            echo "" >> /root/.bashrc
+            echo "# SELinux wrapper for Ubuntu" >> /root/.bashrc
+            echo "alias semanage='semanage-ubuntu'" >> /root/.bashrc
+          fi
+          
+          log "✓ semanage wrapper installed (use 'semanage-ubuntu' or reload shell for alias)"
+          warn "Note: SELinux is not enabled. The wrapper translates commands to Ubuntu equivalents."
+          warn "To use: source ~/.bashrc  (or open new terminal)"
+        fi
       else
         log "✓ SELinux is enabled: $SELINUX_STATUS"
       fi
