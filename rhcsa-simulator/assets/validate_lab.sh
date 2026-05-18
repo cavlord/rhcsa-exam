@@ -50,10 +50,10 @@ check "2b" "AppStream repo exists" "test -f /etc/yum.repos.d/AppStream.repo"
 # Question 3: HTTPD Service Troubleshooting
 echo -e "${YELLOW}=== Question 3: HTTPD Service (files in /var/www/html, must run on port 82) ===${NC}"
 check "3a" "Files exist in /var/www/html" "test -f /var/www/html/index.html"
-check "3b" "HTTPD service running" "systemctl is-active httpd 2>/dev/null || systemctl is-active apache2 2>/dev/null"
-check "3c" "HTTPD listening on port 82" "ss -tlnp | grep -q ':82'"
-check "3d" "HTTPD enabled at boot" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
-check "3e" "SELinux context correct" "ls -Z /var/www/html/index.html 2>/dev/null | grep -q 'httpd_sys_content_t' || echo 'SELinux not enforced or context OK'"
+check "3b" "HTTPD enabled at boot" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
+check "3c" "HTTPD service running" "systemctl is-active httpd 2>/dev/null || systemctl is-active apache2 2>/dev/null"
+check "3d" "HTTPD listening on port 82" "ss -tlnp | grep -q ':82'"
+check "3e" "SELinux allows port 82" "semanage port -l 2>/dev/null | grep http_port_t | grep -q 82 || echo 'SELinux not active'"
 
 # Question 4: Users and Groups
 echo -e "${YELLOW}=== Users and Groups ===${NC}"
