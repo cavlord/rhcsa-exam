@@ -52,8 +52,8 @@ echo -e "${YELLOW}=== Question 3: HTTPD Service (files in /var/www/html, must ru
 check "3a" "Files exist in /var/www/html" "test -f /var/www/html/index.html"
 check "3b" "HTTPD enabled at boot" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
 check "3c" "HTTPD service running" "systemctl is-active httpd 2>/dev/null || systemctl is-active apache2 2>/dev/null"
-check "3d" "HTTPD listening on port 82" "ss -tlnp | grep -q ':82'"
-check "3e" "SELinux allows port 82" "semanage port -l 2>/dev/null | grep http_port_t | grep -q '\\b82\\b' || echo 'SELinux not fully active'"
+check "3d" "HTTPD listening on port 82" "ss -tlnp | grep ':82' | grep -q 'apache2\\|httpd'"
+check "3e" "Port 82 not blocked by other process" "! ss -tlnp | grep ':82' | grep -qv 'apache2\\|httpd'"
 
 # Question 4: Users and Groups
 echo -e "${YELLOW}=== Users and Groups ===${NC}"
@@ -138,7 +138,7 @@ check "16b" "Filesystem resized" "df -h /mnt/share | awk 'NR==2 {if(\$2+0 >= 400
 echo -e "${YELLOW}=== Tuned Profile ===${NC}"
 check "17a" "Tuned installed" "which tuned-adm"
 check "17b" "Tuned running" "systemctl is-active tuned 2>/dev/null | grep -q 'active'"
-check "17c" "Profile configured" "tuned-adm active 2>/dev/null | grep -q 'virtual-guest\\|throughput-performance\\|balanced'"
+check "17c" "Profile set to virtual-guest" "tuned-adm active 2>/dev/null | grep -q 'virtual-guest'"
 
 # Summary
 TOTAL=$((PASS + FAIL))
