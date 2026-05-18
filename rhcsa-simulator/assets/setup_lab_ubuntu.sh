@@ -359,6 +359,15 @@ main() {
   log "  - /dev/vdb → loop device for LVM"
   log "  - Core RHCSA concepts remain the same!"
   
+  # Create rhcsa-exam alias
+  log "Creating rhcsa-exam alias..."
+  if ! grep -q "alias rhcsa-exam" /root/.bashrc 2>/dev/null; then
+    echo "" >> /root/.bashrc
+    echo "# RHCSA Exam Simulator" >> /root/.bashrc
+    echo "alias rhcsa-exam='bash /root/rhcsa_exam_menu.sh'" >> /root/.bashrc
+    log "✓ Created rhcsa-exam alias (reload shell or run: source ~/.bashrc)"
+  fi
+  
   echo ""
   echo "=========================================="
   echo "Lab environment ready!"
