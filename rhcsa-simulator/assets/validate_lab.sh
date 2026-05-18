@@ -44,8 +44,8 @@ check "1d" "Hostname configured" "hostnamectl | grep -q 'node1.net11.example.com
 
 # Question 2: DNF Repositories
 echo -e "${YELLOW}=== Repository Configuration ===${NC}"
-check "2a" "BaseOS repo exists" "test -f /etc/yum.repos.d/BaseOS.repo"
-check "2b" "AppStream repo exists" "test -f /etc/yum.repos.d/AppStream.repo"
+check "2a" "BaseOS repo configured" "grep -rq '\[BaseOS\]' /etc/yum.repos.d/ 2>/dev/null"
+check "2b" "AppStream repo configured" "grep -rq '\[AppStream\]' /etc/yum.repos.d/ 2>/dev/null"
 
 # Question 3: HTTPD Service Troubleshooting
 echo -e "${YELLOW}=== Question 3: HTTPD Service (files in /var/www/html, must run on port 82) ===${NC}"
