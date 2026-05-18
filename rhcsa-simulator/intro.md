@@ -1,4 +1,4 @@
-﻿# RHCSA Exam Simulator
+﻿# Fahmi R - HCSA Exam Simulator 
 
 Welcome to the RHCSA (Red Hat Certified System Administrator) exam simulator!
 
