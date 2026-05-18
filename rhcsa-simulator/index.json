@@ -1,0 +1,39 @@
+{
+  "title": "RHCSA Exam Simulator",
+  "description": "Hands-on RHCSA exam practice with real Linux environment",
+  "details": {
+    "intro": {
+      "text": "intro.md"
+    },
+    "steps": [
+      {
+        "title": "Setup Lab Environment",
+        "text": "step1/text.md",
+        "foreground": "step1/setup.sh"
+      },
+      {
+        "title": "Complete RHCSA Tasks",
+        "text": "step2/text.md"
+      }
+    ],
+    "finish": {
+      "text": "finish.md"
+    },
+    "assets": {
+      "host01": [
+        {"file": "setup_lab_ubuntu.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "validate_lab.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "init_exam.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "rhcsa_exam_menu.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "reset_lab.sh", "target": "/root/", "chmod": "+x"},
+        {"file": "questions.txt", "target": "/root/"}
+      ]
+    }
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  },
+  "interface": {
+    "layout": "terminal"
+  }
+}
