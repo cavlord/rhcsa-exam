@@ -14,7 +14,10 @@ Node1 Tasks
    - AppStream
 
 3. In your system, httpd service has some files in /var/www/html, httpd service on your
-   system having some issue, service is not running on port 82. Solve the problem.
+   system having some issue, service is not running on port 82. Troubleshoot and fix:
+   - Service must listen on port 82
+   - Files in /var/www/html must have correct SELinux context
+   - Service must be enabled and running
 
 4. Create users and groups:
    - Group: manager
