@@ -243,6 +243,8 @@ configure_tuned() {
 install_dependencies() {
   log "Installing all required packages..."
   apt-get update -qq
+  
+  # Install main packages
   apt-get install -y \
     network-manager \
     apache2 \
@@ -256,10 +258,18 @@ install_dependencies() {
     parted \
     bzip2 \
     tar \
-    rsyslog \
-    policycoreutils-python-utils >/dev/null 2>&1
+    rsyslog >/dev/null 2>&1
   
-  log "SELinux tools installed (semanage command available)"
+  # Install SELinux tools separately with visible output
+  log "Installing SELinux management tools..."
+  apt-get install -y policycoreutils-python-utils
+  
+  if command -v semanage >/dev/null 2>&1; then
+    log "✓ SELinux tools installed successfully (semanage command available)"
+  else
+    warn "⚠ SELinux tools installation may have failed - semanage not found"
+    warn "You may need to run: apt install policycoreutils-python-utils"
+  fi
 }
 
 main() {
