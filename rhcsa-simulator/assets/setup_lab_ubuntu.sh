@@ -256,7 +256,10 @@ install_dependencies() {
     parted \
     bzip2 \
     tar \
-    rsyslog >/dev/null 2>&1
+    rsyslog \
+    policycoreutils-python-utils >/dev/null 2>&1
+  
+  log "SELinux tools installed (semanage command available)"
 }
 
 main() {
