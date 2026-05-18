@@ -1,290 +1,182 @@
 #!/usr/bin/env bash
-# Don't exit on error - continue setup even if some commands fail
-# set -e
+# Complete RHCSA Exam Validation Script
+# Validates all 17 questions
 
-LOGFILE="/var/log/rhcsa_simulator.log"
-# Log to file but don't use exec to avoid process issues
-# exec > >(tee -a "$LOGFILE") 2>&1
+# Don't exit on error - continue checking all questions
+# set -e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
-log() {
-  echo -e "${GREEN}[INFO]${NC} $1"
+PASS=0
+FAIL=0
+
+echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║           RHCSA EXAM VALIDATION - ALL 17 QUESTIONS             ║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+check() {
+  local question="$1"
+  local name="$2"
+  local cmd="$3"
+  
+  echo -n "Q${question}: ${name}... "
+  
+  if eval "$cmd" >/dev/null 2>&1; then
+    echo -e "${GREEN}[PASS]${NC}"
+    ((PASS++))
+  else
+    echo -e "${RED}[FAIL]${NC}"
+    ((FAIL++))
+  fi
 }
 
-warn() {
-  echo -e "${YELLOW}[WARN]${NC} $1"
-}
+# Question 1: Network Configuration
+echo -e "${YELLOW}=== Network Configuration ===${NC}"
+check "1a" "IP Address configured on eth1" "nmcli -f ipv4.addresses con show eth1 | grep -q '192.168.1.6/24'"
+check "1b" "Gateway configured" "nmcli -f ipv4.gateway con show eth1 | grep -q '192.168.1.254'"
+check "1c" "DNS configured" "nmcli -f ipv4.dns con show eth1 | grep -q '192.168.1.254'"
+check "1d" "Hostname configured" "hostnamectl | grep -q 'node1.net11.example.com'"
 
-fail() {
-  echo -e "${RED}[ERROR]${NC} $1"
-  exit 1
-}
+# Question 2: DNF Repositories
+echo -e "${YELLOW}=== Repository Configuration ===${NC}"
+check "2a" "BaseOS repo exists" "test -f /etc/yum.repos.d/BaseOS.repo"
+check "2b" "AppStream repo exists" "test -f /etc/yum.repos.d/AppStream.repo"
 
-require_root() {
-  [[ $EUID -eq 0 ]] || fail "Run as root"
-}
+# Question 3: HTTPD Service Troubleshooting
+echo -e "${YELLOW}=== Question 3: HTTPD Service (files in /var/www/html, must run on port 82) ===${NC}"
+check "3a" "Files exist in /var/www/html" "test -f /var/www/html/index.html"
+check "3b" "HTTPD service running" "systemctl is-active httpd 2>/dev/null || systemctl is-active apache2 2>/dev/null"
+check "3c" "HTTPD listening on port 82" "ss -tlnp | grep -q ':82'"
+check "3d" "HTTPD enabled at boot" "systemctl is-enabled httpd 2>/dev/null || systemctl is-enabled apache2 2>/dev/null"
 
-configure_network() {
-  log "Installing NetworkManager for nmcli"
-  apt-get install -y network-manager >/dev/null 2>&1 || true
-  systemctl enable NetworkManager 2>/dev/null || true
-  systemctl start NetworkManager 2>/dev/null || true
-  
-  # Create veth pair for practice (more compatible with nmtui than dummy)
-  log "Creating virtual network interface 'eth1' for practice"
-  ip link add eth1 type veth peer name veth1 2>/dev/null || true
-  ip link set eth1 up 2>/dev/null || true
-  ip link set veth1 up 2>/dev/null || true
-  
-  # Make veth interface managed by NetworkManager
-  cat > /etc/NetworkManager/conf.d/10-globally-managed-devices.conf <<EOF
-[keyfile]
-unmanaged-devices=none
-EOF
-  
-  log "Restarting NetworkManager..."
-  timeout 10 systemctl restart NetworkManager 2>/dev/null || true
-  sleep 2
-  log "NetworkManager restarted"
-  
-  # Create eth1 interface but DON'T configure it - students must configure
-  log "Creating eth1 interface (not configured - students must configure)"
-  nmcli con add type ethernet ifname eth1 con-name eth1 autoconnect no 2>/dev/null || true
-  log "eth1 interface created (no IP/Gateway/DNS configured)"
-  
-  log "Students should reconfigure:"
-  log "  Network (eth1):"
-  log "    - IP: 192.168.1.6/24"
-  log "    - Gateway: 192.168.1.254"
-  log "    - DNS: 192.168.1.254"
-  log "  Hostname: node1.net11.example.com"
-  log "Can use nmcli or nmtui to configure eth1"
-  
-  # Set hostname to WRONG value (students must fix)
-  hostnamectl set-hostname broken.example.com 2>/dev/null || true
-  log "Hostname set to 'broken.example.com' (intentionally wrong)"
-  
-  # Create systemd service to recreate veth pair on boot
-  cat > /etc/systemd/system/veth-eth1.service <<EOF
-[Unit]
-Description=Create virtual network interface eth1
-After=network.target
-Before=NetworkManager.service
+# Question 4: Users and Groups
+echo -e "${YELLOW}=== Users and Groups ===${NC}"
+check "4a" "Manager group exists" "getent group manager"
+check "4b" "User simone exists" "id simone"
+check "4c" "User walhalla exists" "id walhalla"
+check "4d" "User pandora exists" "id pandora"
+check "4e" "Simone in manager group" "id simone | grep -q manager"
+check "4f" "Walhalla in manager group" "id walhalla | grep -q manager"
+check "4g" "Pandora has nologin shell" "grep pandora /etc/passwd | grep -q 'nologin'"
 
-[Service]
-Type=oneshot
-ExecStart=/sbin/ip link add eth1 type veth peer name veth1
-ExecStart=/sbin/ip link set eth1 up
-ExecStart=/sbin/ip link set veth1 up
-RemainAfterExit=yes
+# Question 5: Collaborative Directory
+echo -e "${YELLOW}=== Collaborative Directory ===${NC}"
+check "5a" "Directory exists" "test -d /shared/manager"
+check "5b" "SGID bit set" "stat -c '%a' /shared/manager | grep -q '^2'"
+check "5c" "Group ownership" "stat -c '%G' /shared/manager | grep -q 'manager'"
+check "5d" "Correct permissions" "stat -c '%a' /shared/manager | grep -q '2770'"
 
-[Install]
-WantedBy=multi-user.target
-EOF
-  
-  systemctl enable veth-eth1.service 2>/dev/null || true
-}
+# Question 6: Cron Job
+echo -e "${YELLOW}=== Cron Job ===${NC}"
+check "6a" "Cron job exists" "crontab -u walhalla -l 2>/dev/null | grep -q 'logger'"
+check "6b" "Runs every minute" "crontab -u walhalla -l 2>/dev/null | grep -q '^\*/1\|^\*'"
+check "6c" "Correct command" "crontab -u walhalla -l 2>/dev/null | grep -q 'EX200 Test'"
 
-configure_repo() {
-  log "Repository configuration - students must create repo files"
-  warn "Students must create BaseOS.repo and AppStream.repo in /etc/yum.repos.d/"
-  
-  # Create directory but don't create repo files - students must create them
-  mkdir -p /etc/yum.repos.d
-}
+# Question 7: Autofs
+echo -e "${YELLOW}=== Autofs ===${NC}"
+check "7a" "Autofs installed" "which automount"
+check "7b" "Autofs running" "systemctl is-active autofs 2>/dev/null | grep -q 'active'"
+check "7c" "Auto.master configured" "grep -q '/home' /etc/auto.master"
+check "7d" "Auto.home exists" "test -f /etc/auto.home"
 
-configure_httpd_issue() {
-  log "Installing and configuring Apache (httpd equivalent)"
-  apt-get install -y apache2 >/dev/null 2>&1
-  
-  mkdir -p /var/www/html
-  echo "RHCSA LAB" >/var/www/html/index.html
-  
-  # Change port to 81 (intentionally wrong)
-  sed -i 's/Listen 80/Listen 81/' /etc/apache2/ports.conf
-  sed -i 's/:80/:81/' /etc/apache2/sites-available/000-default.conf
-  
-  # Configure firewall
-  apt-get install -y ufw >/dev/null 2>&1
-  ufw --force enable
-  ufw allow 82/tcp
-  
-  systemctl enable apache2
-  systemctl restart apache2 || true
-}
+# Question 8: Archive
+echo -e "${YELLOW}=== Archive Creation ===${NC}"
+check "8a" "Archive exists" "test -f /root/etc_backup.tar.bz2"
+check "8b" "Archive is bzip2" "file /root/etc_backup.tar.bz2 | grep -q 'bzip2'"
+check "8c" "Archive contains etc" "tar -tjf /root/etc_backup.tar.bz2 2>/dev/null | grep -q 'etc'"
 
-configure_users() {
-  log "Users and groups - students must create them"
-  warn "Students must create users: simone, walhalla, pandora"
-  warn "Students must create group: manager"
-  # Don't create users/groups - students must create them
-}
+# Question 9: Chrony
+echo -e "${YELLOW}=== Chrony/NTP ===${NC}"
+check "9a" "Chrony installed" "which chronyd"
+check "9b" "Chrony running" "systemctl is-active chronyd 2>/dev/null | grep -q 'active' || systemctl is-active chrony 2>/dev/null | grep -q 'active'"
+check "9c" "Server configured" "grep -q 'servera.lab.example.com' /etc/chrony/chrony.conf || grep -q 'servera.lab.example.com' /etc/chrony.conf"
 
-configure_shared_directory() {
-  log "Collaborative directory - students must create it"
-  warn "Students must create /shared/manager with correct permissions"
-  # Don't create directory - students must create it
-}
+# Question 10: Find Files
+echo -e "${YELLOW}=== Find Files ===${NC}"
+check "10a" "Walhalla directory exists" "test -d /root/walhalla"
+check "10b" "Contains walhalla files" "test -n \"\$(ls -A /root/walhalla 2>/dev/null)\""
 
-configure_cron() {
-  log "Installing cron service"
-  apt-get install -y cron >/dev/null 2>&1
-  systemctl enable cron
-  systemctl start cron
-  
-  log "Cron service ready - students must create cron jobs"
-  warn "Students must create cron job for user walhalla"
-  # Don't create cron job - students must create it
-}
+# Question 11: String Extraction
+echo -e "${YELLOW}=== String Extraction ===${NC}"
+check "11a" "Output file exists" "test -f /root/nal_strings.txt || test -f /root/nal.txt"
+check "11b" "Contains 'nal' strings" "test -f /root/nal_strings.txt && grep -q 'nal' /root/nal_strings.txt || test -f /root/nal.txt && grep -q 'nal' /root/nal.txt"
 
-configure_autofs() {
-  log "Installing autofs"
-  apt-get install -y autofs nfs-common >/dev/null 2>&1
-  
-  systemctl enable autofs
-  systemctl start autofs || true
-  
-  log "Autofs service ready - students must configure auto.master and auto.home"
-  warn "Students must configure autofs for user simone"
-  # Don't create auto.master and auto.home entries - students must create them
-}
+# Question 12: Root Password Reset
+echo -e "${YELLOW}=== Root Password Reset ===${NC}"
+echo "Q12: Root password reset (manual verification required) [SKIP]"
 
-configure_archive_task() {
-  log "Preparing archive challenge"
-  mkdir -p /root/archive-task
-}
+# Question 13: Repositories (Node2)
+echo -e "${YELLOW}=== Repositories Node2 ===${NC}"
+echo "Q13: Node2 repositories (same as Q2) [SKIP]"
 
-configure_ntp() {
-  log "Installing and configuring chrony"
-  apt-get install -y chrony >/dev/null 2>&1
-  
-  sed -i '/^pool/d' /etc/chrony/chrony.conf
-  sed -i '/^server/d' /etc/chrony/chrony.conf
-  echo 'server wrong.example.com iburst' >>/etc/chrony/chrony.conf
-  
-  systemctl enable chrony
-  systemctl restart chrony || true
-}
+# Question 14: LVM
+echo -e "${YELLOW}=== LVM Configuration ===${NC}"
+check "14a" "Volume group exists" "vgs | grep -q 'wgroup'"
+check "14b" "Logical volume exists" "lvs | grep -q 'wshare'"
+check "14c" "PE size is 8M" "vgs wgroup 2>/dev/null | grep -q '8.00m'"
+check "14d" "Mounted at /mnt/share" "mount | grep -q '/mnt/share'"
+check "14e" "Persist upon reboot (in fstab)" "grep -q '/mnt/share' /etc/fstab"
 
-configure_find_tasks() {
-  log "Preparing find task directory"
-  
-  mkdir -p /opt/labdata
-  # Create some dummy files but not owned by walhalla yet
-  touch /opt/labdata/file1
-  touch /opt/labdata/file2
-  touch /opt/labdata/file3
-  
-  log "Students must find files owned by user walhalla"
-  # Don't create walhalla-owned files - students must create user first
-}
+# Question 15: Swap
+echo -e "${YELLOW}=== Swap Partition ===${NC}"
+check "15a" "Swap exists" "swapon --show | grep -q 'swap'"
+check "15b" "Swap size ~400MB" "swapon --show | awk '{if(\$3 ~ /[0-9]+M/ && \$3+0 >= 380 && \$3+0 <= 420) exit 0; else exit 1}'"
+check "15c" "Persist upon reboot (in fstab)" "grep -q 'swap' /etc/fstab"
 
-configure_lvm() {
-  log "Preparing LVM exam tasks"
-  
-  # Install LVM tools
-  apt-get install -y lvm2 >/dev/null 2>&1
-  
-  # Create a loop device for LVM practice
-  dd if=/dev/zero of=/tmp/disk.img bs=1M count=1024 2>/dev/null
-  LOOP_DEV=$(losetup -f)
-  losetup "$LOOP_DEV" /tmp/disk.img
-  
-  log "Using loop device: $LOOP_DEV"
-  
-  pvcreate "$LOOP_DEV" 2>/dev/null || true
-  vgcreate -s 4M wgroup "$LOOP_DEV" 2>/dev/null || true
-  lvcreate -L 100M -n wronglv wgroup 2>/dev/null || true
-  
-  mkfs.ext4 /dev/wgroup/wronglv >/dev/null 2>&1
-  
-  mkdir -p /mnt/share
-  mount /dev/wgroup/wronglv /mnt/share || true
-}
+# Question 16: Resize LV
+echo -e "${YELLOW}=== Resize Logical Volume ===${NC}"
+check "16a" "LV size ~450MB" "lvs wshare 2>/dev/null | awk '{if(\$4 ~ /[0-9]+/ && \$4+0 >= 430 && \$4+0 <= 470) exit 0; else exit 1}'"
+check "16b" "Filesystem resized" "df -h /mnt/share | awk 'NR==2 {if(\$2+0 >= 400) exit 0; else exit 1}'"
 
-configure_swap_task() {
-  log "Preparing swap challenge"
-  # Students will create swap partition
-}
+# Question 17: Tuned Profile
+echo -e "${YELLOW}=== Tuned Profile ===${NC}"
+check "17a" "Tuned installed" "which tuned-adm"
+check "17b" "Tuned running" "systemctl is-active tuned 2>/dev/null | grep -q 'active'"
+check "17c" "Profile configured" "tuned-adm active 2>/dev/null | grep -q 'virtual-guest\\|throughput-performance\\|balanced'"
 
-configure_tuned() {
-  log "Installing tuned"
-  apt-get install -y tuned >/dev/null 2>&1
-  systemctl enable tuned
-  systemctl start tuned
-  
-  log "Tuned service ready - students must set profile"
-  warn "Students must configure tuned profile"
-  # Don't set profile - students must set it
-}
+# Summary
+TOTAL=$((PASS + FAIL))
+PERCENTAGE=$((PASS * 100 / TOTAL))
 
-install_dependencies() {
-  log "Installing all required packages..."
-  apt-get update -qq
-  apt-get install -y \
-    network-manager \
-    apache2 \
-    chrony \
-    autofs \
-    nfs-common \
-    lvm2 \
-    cron \
-    ufw \
-    tuned \
-    parted \
-    bzip2 \
-    tar \
-    rsyslog >/dev/null 2>&1
-}
+echo ""
+echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║                        EXAM RESULTS                            ║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${GREEN}PASSED:${NC} $PASS / $TOTAL"
+echo -e "${RED}FAILED:${NC} $FAIL / $TOTAL"
+echo -e "${YELLOW}SCORE:${NC}  $PERCENTAGE%"
+echo ""
 
-main() {
-  require_root
-  
-  log "Starting RHCSA simulation environment setup for Ubuntu"
-  log "Note: Some commands adapted from RHEL to Ubuntu equivalents"
-  
-  install_dependencies
-  configure_network
-  configure_repo
-  configure_httpd_issue
-  configure_users
-  configure_shared_directory
-  configure_cron
-  configure_autofs
-  configure_archive_task
-  configure_ntp
-  configure_find_tasks
-  configure_lvm
-  configure_swap_task
-  configure_tuned
-  
-  log "RHCSA simulation environment created successfully!"
-  log "View exam questions: cat /root/questions.txt"
-  log "Validate solutions: /root/validate_lab.sh"
-  log ""
-  log "Ubuntu Adaptations:"
-  log "  - httpd → apache2"
-  log "  - dnf/yum → apt-get"
-  log "  - /dev/vdb → loop device for LVM"
-  log "  - Core RHCSA concepts remain the same!"
-  
-  echo ""
-  echo "=========================================="
-  echo "Lab environment ready!"
-  echo "=========================================="
-  echo ""
-  echo "Starting RHCSA Exam Menu..."
-  sleep 1
-  
-  # Launch exam menu directly from here
-  cd /root
-  exec bash /root/rhcsa_exam_menu.sh
-}
+if [ $PERCENTAGE -ge 70 ]; then
+    echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║  🎉 CONGRATULATIONS! You passed the RHCSA exam simulation!    ║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
+elif [ $PERCENTAGE -ge 50 ]; then
+    echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║  ⚠️  Good effort! Keep practicing to improve your score.      ║${NC}"
+    echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════╝${NC}"
+else
+    echo -e "${RED}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  ❌ More practice needed. Review the failed tasks.             ║${NC}"
+    echo -e "${RED}╚════════════════════════════════════════════════════════════════╝${NC}"
+fi
 
-main "$@"
+echo ""
+echo "Detailed results saved to: /root/validation_results.log"
+
+# Save detailed results
+{
+    echo "RHCSA Exam Validation Results"
+    echo "Date: $(date)"
+    echo "Passed: $PASS / $TOTAL"
+    echo "Failed: $FAIL / $TOTAL"
+    echo "Score: $PERCENTAGE%"
+} > /root/validation_results.log
 
 # Made with Bob
