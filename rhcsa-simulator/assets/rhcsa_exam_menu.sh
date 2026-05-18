@@ -86,7 +86,7 @@ show_question() {
             echo "  • IP Address: 192.168.1.6/24"
             echo "  • Gateway: 192.168.1.254"
             echo "  • DNS: 192.168.1.254"
-            echo "  • Hostname: node1.net11.example.com"
+            echo "  • Hostname: ibmid.example.com"
             echo ""
             echo -e "${YELLOW}Hint: Use nmcli or NetworkManager${NC}"
             ;;
