@@ -51,24 +51,10 @@ EOF
   sleep 2
   log "NetworkManager restarted"
   
-  # Configure eth1 with WRONG settings for exam practice
-  log "Configuring eth1 with intentionally wrong settings"
+  # Create eth1 interface but DON'T configure it - students must configure
+  log "Creating eth1 interface (not configured - students must configure)"
   nmcli con add type ethernet ifname eth1 con-name eth1 autoconnect no 2>/dev/null || true
-  log "Connection added"
-  
-  nmcli con mod eth1 ipv4.addresses "192.168.1.100/24" 2>/dev/null || true
-  log "IP address set"
-  
-  nmcli con mod eth1 ipv4.gateway "192.168.1.1" 2>/dev/null || true
-  log "Gateway set"
-  
-  nmcli con mod eth1 ipv4.dns "192.168.1.254" 2>/dev/null || true
-  log "DNS set"
-  
-  nmcli con mod eth1 ipv4.method manual 2>/dev/null || true
-  log "Method set to manual"
-  
-  log "eth1 connection created (not activated yet)"
+  log "eth1 interface created (no IP/Gateway/DNS configured)"
   
   log "Students should reconfigure:"
   log "  Network (eth1):"
@@ -104,26 +90,11 @@ EOF
 }
 
 configure_repo() {
-  log "Creating repository configuration (Ubuntu uses apt, not dnf)"
-  warn "Repository tasks will use apt instead of dnf/yum"
+  log "Repository configuration - students must create repo files"
+  warn "Students must create BaseOS.repo and AppStream.repo in /etc/yum.repos.d/"
   
-  # Create dummy repo files for practice
+  # Create directory but don't create repo files - students must create them
   mkdir -p /etc/yum.repos.d
-  cat >/etc/yum.repos.d/BaseOS.repo <<EOF
-[BaseOS]
-name=BaseOS
-baseurl=http://invalid.example.com/rhel9/BaseOS
-enabled=1
-gpgcheck=0
-EOF
-
-  cat >/etc/yum.repos.d/AppStream.repo <<EOF
-[AppStream]
-name=AppStream
-baseurl=http://invalid.example.com/rhel9/AppStream
-enabled=1
-gpgcheck=0
-EOF
 }
 
 configure_httpd_issue() {
@@ -147,36 +118,27 @@ configure_httpd_issue() {
 }
 
 configure_users() {
-  log "Creating RHCSA users and groups"
-  
-  groupadd manager 2>/dev/null || true
-  
-  useradd -m simone -G manager 2>/dev/null || true
-  useradd -m walhalla -G manager 2>/dev/null || true
-  useradd -s /usr/sbin/nologin pandora 2>/dev/null || true
-  
-  echo "simone:indionce" | chpasswd
-  echo "walhalla:indionce" | chpasswd
-  echo "pandora:indionce" | chpasswd
+  log "Users and groups - students must create them"
+  warn "Students must create users: simone, walhalla, pandora"
+  warn "Students must create group: manager"
+  # Don't create users/groups - students must create them
 }
 
 configure_shared_directory() {
-  log "Creating broken collaborative directory"
-  
-  mkdir -p /shared/manager
-  chown root:root /shared/manager
-  chmod 755 /shared/manager
+  log "Collaborative directory - students must create it"
+  warn "Students must create /shared/manager with correct permissions"
+  # Don't create directory - students must create it
 }
 
 configure_cron() {
-  log "Installing and configuring cron"
+  log "Installing cron service"
   apt-get install -y cron >/dev/null 2>&1
   systemctl enable cron
   systemctl start cron
   
-  log "Creating incorrect cron job"
-  # Use crontab command instead of direct file write
-  echo '*/5 * * * * logger EX200 Failed' | crontab -u walhalla - 2>/dev/null || true
+  log "Cron service ready - students must create cron jobs"
+  warn "Students must create cron job for user walhalla"
+  # Don't create cron job - students must create it
 }
 
 configure_autofs() {
@@ -208,12 +170,16 @@ configure_ntp() {
 }
 
 configure_find_tasks() {
-  log "Generating walhalla files"
+  log "Preparing find task directory"
   
   mkdir -p /opt/labdata
-  touch /opt/labdata/w1
-  touch /opt/labdata/w2
-  chown walhalla:walhalla /opt/labdata/w1 /opt/labdata/w2
+  # Create some dummy files but not owned by walhalla yet
+  touch /opt/labdata/file1
+  touch /opt/labdata/file2
+  touch /opt/labdata/file3
+  
+  log "Students must find files owned by user walhalla"
+  # Don't create walhalla-owned files - students must create user first
 }
 
 configure_lvm() {
