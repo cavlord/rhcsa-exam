@@ -103,7 +103,7 @@ configure_httpd_issue() {
   
   # Install SELinux packages
   log "Installing SELinux..."
-  apt-get install -y selinux-basics selinux-policy-default auditd policycoreutils selinux-utils >/dev/null 2>&1
+  apt-get install -y selinux-basics selinux-policy-default auditd policycoreutils selinux-utils policycoreutils-python-utils >/dev/null 2>&1
   
   # Install apache2 (httpd equivalent on Ubuntu)
   apt-get install -y apache2 >/dev/null 2>&1
@@ -118,32 +118,40 @@ configure_httpd_issue() {
   echo "RHCSA LAB" >/var/www/html/index.html
   echo "Welcome to RHCSA Exam" >/var/www/html/welcome.html
   
-  # THE PROBLEM 1: Wrong port configuration (81 instead of 82)
+  # Configure httpd to listen on port 82
   sed -i 's/Listen 80/Listen 82/' /etc/apache2/ports.conf
   sed -i 's/:80/:82/' /etc/apache2/sites-available/000-default.conf
   
-  # THE PROBLEM 2: Wrong SELinux context on /var/www/html files
-  # Set wrong context (should be httpd_sys_content_t)
-  if command -v chcon >/dev/null 2>&1; then
-    chcon -R -t default_t /var/www/html 2>/dev/null || true
+  # THE PROBLEM: SELinux doesn't allow httpd to bind to port 82
+  # Remove port 82 from http_port_t (if SELinux is active)
+  if command -v semanage >/dev/null 2>&1; then
+    # Port 82 is not in default http_port_t list
+    # Students must add it with: semanage port -a -t http_port_t -p tcp 82
+    log "SELinux will block port 82 - students must use semanage to allow it"
   fi
   
-  # Configure firewall
+  # Set correct SELinux context for files (this is OK)
+  if command -v restorecon >/dev/null 2>&1; then
+    restorecon -Rv /var/www/html 2>/dev/null || true
+  fi
+  
+  # Configure firewall to allow port 82
   apt-get install -y ufw >/dev/null 2>&1
   ufw --force enable
   ufw allow 82/tcp
   
-  # Enable SELinux in permissive mode (for Ubuntu compatibility)
+  # Enable SELinux in enforcing mode (will block port 82)
   if [ -f /etc/selinux/config ]; then
-    sed -i 's/SELINUX=.*/SELINUX=permissive/' /etc/selinux/config 2>/dev/null || true
+    sed -i 's/SELINUX=.*/SELINUX=enforcing/' /etc/selinux/config 2>/dev/null || true
   fi
   
-  # Enable and start httpd
+  # Enable httpd but DON'T start it (will fail due to SELinux)
   systemctl enable apache2
-  systemctl restart apache2 || true
+  systemctl stop apache2 2>/dev/null || true
   
-  warn "PROBLEM: httpd files have wrong SELinux context"
-  warn "Students must: restorecon -Rv /var/www/html OR semanage/chcon"
+  warn "PROBLEM: SELinux blocks httpd from binding to port 82"
+  warn "Students must: semanage port -a -t http_port_t -p tcp 82"
+  warn "Then: systemctl restart httpd"
 }
 
 configure_users() {
